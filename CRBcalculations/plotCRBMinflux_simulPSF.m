@@ -7,7 +7,9 @@ clear
 smappath = '/Users/ries/git/SMAP'; % this code uses helper function from SMAP
 dirlist=genpath('/Users/ries/git/SMAP/shared');addpath(dirlist)
 
-simulationpath='/Users/ries/Library/CloudStorage/OneDrive-Personal/Projects/MINFLUXexcitation/paper/data/simulations/';
+% simulationpath='/Users/ries/Library/CloudStorage/OneDrive-Personal/Projects/MINFLUXexcitation/paper/data/simulations/';
+simulationpath=[fileparts(fileparts(mfilename('fullpath'))) filesep 'PSF_simulation' filesep 'simulated_data' filesep]
+
 
 % important parameters
 L=50; % nm, diameter (not radius) of scan pattern

@@ -1,0 +1,20 @@
+%% This function introduces a phase shift at the center of the input image.
+
+
+function E = pishift(sys,E,r,t,p)
+
+radshift = 1/sqrt(2)+0.03;
+idx = r<=radshift;       % The area for pi shift.
+
+%idx = r<=1/sqrt(2); % This value is used in my FOM poster.
+idx = 2*idx-1;
+phase = idx.*exp((pi)*i);   % introducing pi shift to the phase angle
+if isfield(sys, 'delshift')
+phase(r<=radshift) = phase(r<=radshift).*exp(sys.delshift*i);
+end
+phase = repmat(phase,size(E,1),1);
+E2 = E.*phase;
+
+E = E2;
+end
+

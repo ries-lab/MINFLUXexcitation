@@ -1,0 +1,156 @@
+
+				     MATLAB toolbox
+		________________________________________________________
+
+			     C-MEX wrapper performance hints
+		________________________________________________________
+
+
+** Contents
+
+	1. Introduction
+	2. Example
+	3. Comments
+	4. Documents
+
+** Publisher
+
+	Marcel Leutenegger		marcel.leutenegger@epfl.ch
+	EPFL STI IOA LOB
+	BM 4.143			Phone:	+41 21 693 77 19
+	Station 17
+	CH-1015 Lausanne
+
+
+
+1. Introduction
+
+	The following code shows a typical prologue in a C-MEX file implementing an
+	elementary function:
+
+		#include "mex.h"
+
+		void mexFunction(int nlhs, mxArray* plhs[],
+		                 int nrhs, const mxArray* prhs[])
+		{
+		//  ... argument checking ...
+
+		    plhs[0]=mxCreateNumericArray(
+				mxGetNumberOfDimensions(prhs[0]),
+				mxGetDimensions(prhs[0]),
+				mxDOUBLE_CLASS,
+				mxIsComplex(prhs[0]));
+
+		//  ... computation ...
+		}
+
+	The function first checks the type and dimensions of all passed input arguments.
+	Next, it creates for each output argument a new mxArray to store the result.
+	Finally, the computation is executed.
+
+	By default, all mxArray creation functions initialize the data elements to zero
+	before returning the array. This guarantees a well-defined state of all data
+	elements not overwritten during computation. Unfortunately, if the function
+	overwrites all data elements, the previous initialization does nothing than
+	waste processing resources.
+
+   Performance bottleneck
+
+	At first glance, the data initialization consumes only little processing re-
+	sources. This is effectively true for small output arrays with only a few data
+	elements.
+
+	But for medium and especially for large sized arrays, the initialization voids
+	the processor cache and blocks the system memory bus during cache flush. Hence,
+	the data initialization tends to wipe previous results that are potential inputs
+	to the function and delays the read-in of the input arguments.
+
+	Modern processors as a Pentium 4 have a theoretical peak memory-to-cache
+	transfer rate of about 4GByte/s. This transfer rate is seldom achieved due to
+	alternate reads and writes implying bus delays on each alternation. But a 2GHz
+	processor has a floating-point multiplication throughput of about 1GFlops/s -
+	hence an internal data throughput of about 24GByte/s (two 'double' reads & one
+	write per multiplication). It is clear that memory transfers need to be minimi-
+	zed in order to achieve top performance.
+
+   Consequences
+
+	I found that false initialization consumes up to 60% of the overall execution
+	time for a sequence of functions called with intermediate results as input
+	arguments. This is nearly as disastrous as to do calculations element-wise (in
+	loops) instead of vectorizing the problem. In general, to achieve top perfor-
+	mance, we should
+
+	      •	vectorize problems but work with arrays < 20'000 elements approximati-
+		vely, such that all input and output data fits at least into the second
+		level cache,
+	      •	avoid initialization to work with even larger arrays.
+
+
+2. Example
+
+	This example shows the C-MEX wrapper file for the vector length function 'vabs':
+
+		#include "mex.h"
+		#define L   plhs[0]
+		#define V   prhs[0]
+
+		void fvabs(double* oPr, const double* vPr,
+		           const double* vPi, int n);
+
+
+		void mexFunction(int nlhs, mxArray* plhs[],
+		                 int nrhs, const mxArray* prhs[])
+		{   int n;
+		    if (nlhs > 1) mexErrMsgTxt("Too many output arguments.");
+		    switch(nrhs)
+		    {default:
+		        mexErrMsgTxt("Incorrect number of arguments.");
+		     case 0:
+		        mexPrintf("\nFast vector length.\n\n\t© 15.1.2004\n\n");
+		        break;
+		     case 1:
+		[1]     n=mxGetNumberOfElements(V);
+		[2]     L=mxCreateDoubleMatrix(0,0,mxREAL);
+		        if (n)
+		        {   double* pr;
+		            const int* d=mxGetDimensions(V);
+		            if (*d != 3) mexErrMsgTxt("Incompatible dimensions.");
+		            n/=3;
+		[3]         mxSetDimensions(L,d,mxGetNumberOfDimensions(V));
+		[4]         mxSetPr(L,pr=mxMalloc(n*sizeof(double)));
+		            mxSetM(L,1);
+		            fvabs(pr,mxGetPr(V),mxGetPi(V),n);
+		        }
+		    }
+		}
+
+
+3. Comments
+
+    [1]	Determine the total number of data elements in the output array.
+    [2]	Create an empty real matrix. If you create an empty array, the function does
+	not allocate any memory for the data elements, i.e. the pointers on the real
+	and imaginary parts are both set to null. This is a convenient way to avoid
+	extra, time-consuming memory allocations. The function terminates here if the
+	input array is empty.
+    [3]	Set the dimensions of the output array. Here, we first set them to the dimen-
+	sions of the input array and then reduce the first dimension to singleton in
+	the over next line. The data elements aren't affected on modifying the array
+	dimensions. So, be careful to keep the data blocks large enough.
+    [4]	Finally, allocate memory for the data elements and set the corresponding data
+	pointer(s). In contrast to the array creation functions, we can now avoid the
+	initialization of the output memory by calling 'mxMalloc' instead of
+	'mxCalloc'. We skip initialization knowing that the fvabs routine will set
+	the values of all data elements in the output array.
+
+
+4. Documents
+
+	See also the external API reference in the MATLAB documentation.
+
+
+		________________________________________________________
+
+			    Site map • EPFL © 2005, Lausanne
+				Webmaster • 2 May 2005
