@@ -43,8 +43,8 @@ markerzoom='yo';
 %% calculate CRB for defined L and various PSFs
 %Airy PSF (flat phase, overfilled objective), used for calculating
 %background offset for all PSFs
-fileflat='simulation_flatphase_circular_xy.mat'; 
-psfimflat=load([simulationpath fileflat]).intGaussXY;
+fileflat='simulation_flat_circular_xy.mat'; 
+psfimflat=load([simulationpath fileflat]).simulation_silObj_planner_flat_circular_xy;
 
 gaussmaxint=max(psfimflat(:));
 bgoffset=bgoffsetrel*gaussmaxint;
@@ -78,10 +78,9 @@ hold off
 plotPSF(sigma_CRB*sqrt(N),plotrange,pixelsize,maxcol,'$$\sigma_{2D} \cdot \sqrt{N}$$ (nm)')
 hold on
 plot([-1 0 1 0 0 0]*L/2,[0 0 0 -1 0 1]*L/2,markerzoom,'MarkerSize',3)
-
 %2D donut with a vortex phase
 filevortex='simulation_vortex_circular_xy.mat';
-psfimvortex=load([simulationpath filevortex]).intVortexXY;
+psfimvortex=load([simulationpath filevortex]).simulation_silObj_planner_vortex_circular_xy;
 %scan pattern: triangle + center
 patternx3(:,1)=[0,1,-0.5,-0.5];
 patterny3(:,1)=[0,0,sind(120),-sind(120)];
@@ -157,7 +156,7 @@ plot(patternGx*L2x2/2,patternGy*L2x2/2,markerzoom,'MarkerSize',3)
 % interferometric psf from Wolff et al
 patternx=[0 0 0]; patterny=[-1 0 1]; %1D scan pattern
 fileif='simulation_gauss_linear_iMINFLUX_xyphi_L50nm.mat';
-psfimif=load([simulationpath fileif]).simulation_silObj_gauss_linear_iMINFLUX_xyphi_L50nm;
+psfimif=load([simulationpath fileif]).simulation_gauss_linear_iMINFLUX_xyphi_L50nm;
 psfimif=psfimif/sqrt(2); %wrong normalization during simulation
 if shiftPSF
     psfif=makePSF2DLmirror(psfimif(:,:,2),L/pixelsize);
@@ -273,7 +272,7 @@ plot(dx*L/2,dz*Lz/2, 'ko','MarkerSize',3)
 
 %% intensity vs L plot
 %load x-z image of tophat
-filen3Dthxz='simulation_tophat_circular_-150to150_xz';
+filen3Dthxz='simulation_tophat_circular_-150to150_xz.mat';
 psfimz=load([simulationpath filen3Dthxz]).matall;
 midpz=ceil(size(psfimz)/2);
 

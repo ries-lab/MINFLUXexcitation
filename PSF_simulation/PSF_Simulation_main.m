@@ -50,7 +50,7 @@ hold all
 plot((1:size(out.I, 3))*opt.pixSize, squeeze(out.I(1,round(y/2), :, round(z/2))))
 
 simulation_silObj_planner_flat_circular_xy = squeeze(out.I(1, :,:,round(z/2)));
-save([psimul, filesep, 'simulated_data', filesep, 'simulation_silObj_planner_flat_circular_xy.mat'], 'simulation_silObj_planner_flat_circular_xy')
+save([psimul, filesep, 'simulated_data', filesep, 'simulation_flat_circular_xy.mat'], 'simulation_silObj_planner_flat_circular_xy')
 
 %% Vortex 2D donut.
 sys.wa=7e-3;
@@ -223,8 +223,8 @@ end
 figure(102);clf
 title('Interferometric PSF x-axis intensity plot at different phase')
 
-simulation_silObj_planner_halfmoon_linear_neg25to25nm_xy = matall;
-save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_neg25to25nm_xy.mat'], 'simulation_silObj_planner_halfmoon_linear_neg25to25nm_xy')
+simulation_gauss_linear_iMINFLUX_xyphi_L50nm = matall;
+save([psimul, filesep, 'simulated_data', filesep, 'simulation_gauss_linear_iMINFLUX_xyphi_L50nm.mat'], 'simulation_gauss_linear_iMINFLUX_xyphi_L50nm')
 
 
 %%  Calculation of PSF with halfmoon at wrong polarizations.
