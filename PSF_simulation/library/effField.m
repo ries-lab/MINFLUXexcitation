@@ -20,8 +20,8 @@
 %  .E       Electric field [V/m]
 % err    Error message
 
-%Copyright © Marcel Leutenegger, 2003-2007, École Polytechnique Fédérale de Lausanne (EPFL),
-%Laboratoire d'Optique Biomédicale (LOB), BM - Station 17, 1015 Lausanne, Switzerland.
+%Copyright ï¿½ Marcel Leutenegger, 2003-2007, ï¿½cole Polytechnique Fï¿½dï¿½rale de Lausanne (EPFL),
+%Laboratoire d'Optique Biomï¿½dicale (LOB), BM - Station 17, 1015 Lausanne, Switzerland.
 %
 %    This library is free software; you can redistribute it and/or modify it under
 %    the terms of the GNU Lesser General Public License as published by the Free
@@ -125,7 +125,9 @@ n=n:n+ny-1;
 %
 out.E=Et(1);
 out.E(3,nx,ny,nz)=0;
+if opt.calbar
 f=statusbar('Electric field ...');
+end
 for z=1:nz
    E=ifft(vmul(fft(Et,M,2),v),M,2);
    E=ifft(vmul(fft(vmul(E(:,m,:),a),N,3),w),N,3);
@@ -136,11 +138,15 @@ for z=1:nz
       imagesp(E,'Field Ef');
    end
    clear('E');
+   if opt.calbar
    if isempty(statusbar(z/nz,f))
       err='User abort.';
       return;
    end
+   end
    Et=vmul(Et,kz);
 end
+if opt.calbar
 delete(f);
+end
 err='';
