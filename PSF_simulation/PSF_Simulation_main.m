@@ -14,8 +14,9 @@ sys = [];
 out = [];    
 opt.Et = 0; % Display Et during the calculation.
 opt.Ef = 0;    % Display Ef during the calculation.
+opt.calbar = 0;    % Display calculation progress bar.
 opt.mem = 50000;
-opt.pixSize = 10e-9; % Although the data size will be huge, pixel size of 2e-9 is recommended for fine calculation.
+opt.pixSize = 5e-9; % Although the data size will be huge, pixel size of 2e-9 is recommended for fine calculation.
 opt.radiusCanvas = 0.7e-6; % Lateral range.
 opt.depthCanvas = 0.8e-6; % Axial range. 
 opt.polAngle = 0.0*pi; % Linear polarization angle.
@@ -37,6 +38,8 @@ sys.intImage = opt.intImage;
 %% Gaussian beam generation
 sys.wa=7e-3;
 sys.rz = 0.1e-6;% Axial range.
+out.dr = 2e-9;
+out.dz = 2e-9;
 sys.pl = 0; % Angle of the linear polarization.
 
 sys.Ei = {'circular'};
@@ -52,9 +55,25 @@ plot((1:size(out.I, 3))*opt.pixSize, squeeze(out.I(1,round(y/2), :, round(z/2)))
 simulation_silObj_planner_flat_circular_xy = squeeze(out.I(1, :,:,round(z/2)));
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_flat_circular_xy.mat'], 'simulation_silObj_planner_flat_circular_xy')
 
+
+sys.rz = 0.8e-6;% Axial range.
+out.dr = 5e-9;
+out.dz = 5e-9;
+sys.Ei = {'circular'}
+out=effField(sys,out, opt);      
+out=effIntensity(sys,out);
+[a,x,y,z] = size(out.I);
+
+simulation_silObj_planner_circular_xyz = squeeze(out.I(1, :,:,:));
+save([psimul, filesep, 'simulated_data', filesep, 'simulation_circular_xyz_pxlSize5nm.mat'], 'simulation_silObj_planner_circular_xyz')
+
+
+
 %% Vortex 2D donut.
 sys.wa=7e-3;
 sys.rz = 0.1e-6;% Axial range.
+out.dr = 2e-9;
+out.dz = 2e-9;
 sys.pl = 0; % Angle of the linear polarization.
 
 sys.Ei = { 'phaseramp',  'circular'};    
@@ -71,62 +90,46 @@ hold all
 simulation_silObj_planner_vortex_circular_xy = squeeze(out.I(1, :,:,round(z/2)));
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_vortex_circular_xy.mat'], 'simulation_silObj_planner_vortex_circular_xy')
 
-%% Calculation of PSF with halfmoon with no phase delay.
+
+%% Calculation of PSF with halfmoon (-25 to 25 nm, xyz, pixel size 5 nm).
 sys.wa=7e-3;
-sys.rz = 0.1e-6;% Axial range.
+sys.rz = 0.8e-6;% Axial range.
+out.dr = 5e-9;
+out.dz = 5e-9;
 sys.pl = 0; % Angle of the linear polarization.
+shiftmat = [-18.1, 0, 18.1]; % Shift of 25 nm, thus L = 50 nm.
 matall = [];
 
-sys.delshift = 0;
-sys.Ei = {'halfmoon', 'linear'} ;  
+for k = 1:length(shiftmat)
+
+sys.delshift = deg2rad(shiftmat(k)); 
+sys.Ei = {'halfmoon', 'linear'}   
 
 %%% Calculating excitation PSF.
-% sys
+sys
 out=effField(sys,out, opt);      
 out=effIntensity(sys,out);
 
 %%%% Plotting the 3D intensity
 [a,x,y,z] = size(out.I);
-yaxis = linspace(0, y-1, y)*opt.pixSize;
-figure(99);clf
-hold all
-plot(yaxis, squeeze(out.I(1,round(y/2), :, round(z/2))))
-matall(:,:)=squeeze(out.I(:,:,:,round(z/2)));
+matall(:,:,:, k)=squeeze(out.I(:,:,:,:));
 
-simulation_silObj_planner_halfmoon_linear_xy = matall;
-save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_xy.mat'], 'simulation_silObj_planner_halfmoon_linear_xy')
+end
+
+simulation_silObj_planner_halfmoon_linear_neg25to25nm_xyz = matall;
+save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_neg25to25nm_xyz_pxlSize5nm.mat'], 'simulation_silObj_planner_halfmoon_linear_neg25to25nm_xyz')
 
 
-%% Calculation of PSF with tophat with no phase delay
+%% Calculation of PSF with halfmoon phase delays (displacement - 25 and 25 nm).
 sys.wa=7e-3;
-sys.rz = 0.8e-6;% Axial range.
+sys.rz = 0.01e-6;% Axial range.
+out.dr = 2e-9;
+out.dz = 2e-9;
 sys.pl = 0; % Angle of the linear polarization.
-matall = [];
-sys.Ei = {'pishift', 'circular'};
-  
-%%% Calculating excitation PSF.
-% sys
-out=effField(sys,out, opt);      
-out=effIntensity(sys,out);
-
-[a,x,y,z] = size(out.I);
-yaxis = linspace(0, y-1, y)*opt.pixSize;
-zaxis = linspace(0, z-1, z)*opt.pixSize;
-figure(98);clf
-hold all
-plot(zaxis, squeeze(out.I(1,round(y/2), round(x/2), :)))
-matall(:,:)=squeeze(out.I(:,round(y/2),:,:)); 
-
-simulation_silObj_planner_tophat_circular_xz = matall;
-save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_xz'], 'simulation_silObj_planner_tophat_circular_xz')
-
-%% Calculation of PSF with halfmoon phase delays.
-sys.wa=7e-3;
-sys.rz = 0.1e-6;% Axial range.
-sys.pl = 0; % Angle of the linear polarization.
-
+% shiftmat = [0, 3.6,	7.3, 10.9, 14.5, 18.1, 21.8, 29, 36.3, 54.4, 72.6, 90.7, 108.9]; % Phase delay in degrees for displacements of 0, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 125, and 150 nm. 
 shiftmat = [-18.1, 0, 18.1]; % Shift of 25 nm, thus L = 50 nm.
 matall = [];
+
 figure(99);clf
 for k = 1:length(shiftmat)
     sys.delshift = deg2rad(shiftmat(k));   
@@ -148,9 +151,32 @@ end
 simulation_silObj_planner_halfmoon_linear_neg25to25nm_xy = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_neg25to25nm_xy.mat'], 'simulation_silObj_planner_halfmoon_linear_neg25to25nm_xy')
 
-%% Calculation of PSF with tophat with different phase delays
+
+%% Calculation of PSF with tophat (xy, no phase delay)
+sys.wa=7e-3;
+sys.rz = 0.01e-6;% Axial range.
+out.dr = 2e-9;
+out.dz = 2e-9;
+sys.pl = 0; % Angle of the linear polarization.
+matall = [];
+sys.Ei = {'pishift', 'circular'}  
+  
+%%% Calculating excitation PSF.
+% sys
+out=effField(sys,out, opt);      
+out=effIntensity(sys,out);
+[a,x,y,z] = size(out.I);
+
+
+simulation_silObj_planner_tophat_circular_xy = squeeze(out.I(:,:,:,round(z/2)));
+save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_xy'], 'simulation_silObj_planner_tophat_circular_xy')
+
+
+%% Calculation of PSF with tophat ( -75 to 75 nm)
 sys.wa=7e-3;
 sys.rz = 0.8e-6;% Axial range.
+out.dr = 2e-9;
+out.dz = 2e-9;
 sys.pl = 0; % Angle of the linear polarization.
 
 shiftmat = [20.84, 0, -20.84];
@@ -162,11 +188,11 @@ for k = 1:length(shiftmat)
 
 %%% Calculating excitation PSF.
     % sys
-    % out=effField(sys,out, opt);      
+    out=effField(sys,out, opt);      
     out=effIntensity(sys,out);
     [a,x,y,z] = size(out.I);
-    yaxis = linspace(0, y-1, y)*opt.pixSize;
     zaxis = linspace(0, z-1, z)*opt.pixSize;
+    figure(98)
     hold all
     plot(zaxis, squeeze(out.I(1,round(y/2), round(x/2), :)))
     hold all
@@ -176,9 +202,41 @@ end
 simulation_silObj_planner_tophat_circular_neg25to25nm_xz = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_neg25to25nm_xz.mat'], 'simulation_silObj_planner_tophat_circular_neg25to25nm_xz')
 
+
+%% Calculation of PSF with tophat (- 75 to 75nm, pixel size 5 nm)
+sys.wa=7e-3;
+sys.rz = 0.8e-6;% Axial range.
+out.dr = 5e-9;
+out.dz = 5e-9;
+sys.pl = 0; % Angle of the linear polarization.
+
+shiftmat = [20.84, 0, -20.84];
+matall = [];
+
+for k = 1:length(shiftmat)
+    sys.delshift = deg2rad(shiftmat(k));
+    sys.Ei = {'pishift', 'circular'}   
+
+%%% Calculating excitation PSF.
+    sys
+    out=effField(sys,out, opt);      
+    out=effIntensity(sys,out);
+    [a,x,y,z] = size(out.I);
+    matall(:,:,:, k)=squeeze(out.I(:,:,:,:)); 
+end
+
+
+simulation_silObj_planner_tophat_circular_neg75to75nm_xyz = matall;
+save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_neg75to75nm_xyz_pxlSize5nm.mat'], 'simulation_silObj_planner_tophat_circular_neg75to75nm_xyz')
+
+
+
+
 %% Interferometric bi-lobe beam from Wolff, Scheiderer et al., Science 2023
 % Beam diameter and positions are referred to a thesis by Dr. Tobias Engelhardt, where beam diameter 2mm, distance between two beams 4mm, back aperture 5.6mm.
 sys.rz = 0.1e-6;% Axial range.
+out.dr = 2e-9;
+out.dz = 2e-9;
 shiftx = [0.0023];
 diam = [0.0023];
 piston = [161.7, 180, 198.3];
@@ -220,7 +278,7 @@ for ii = 1:length(shiftx) % Loop for different beam shift amount.
         end
     end
 end
-figure(102);clf
+figure(102);
 title('Interferometric PSF x-axis intensity plot at different phase')
 
 simulation_gauss_linear_iMINFLUX_xyphi_L50nm = matall;
@@ -229,7 +287,9 @@ save([psimul, filesep, 'simulated_data', filesep, 'simulation_gauss_linear_iMINF
 
 %%  Calculation of PSF with halfmoon at wrong polarizations.
 sys.wa=7e-3;
-sys.rz = 0.1e-6;% Axial range.
+sys.rz = 0.01e-6;% Axial range.
+out.dr = 5e-9;
+out.dz = 5e-9;
 sys.pl = 0; % Angle of the linear polarization.
 shiftmat = [0];
 poldeg = linspace(0, 45, 46); % Degree of linear polarization orientation
@@ -248,7 +308,7 @@ for k = length(poldeg):-1:1
     hold all
     matall(:,:,k)=squeeze(out.I(:,:,:,round(z/2)));
 end
-figure(111);clf
+figure(111);
 title('Halfmoon PSF x-axis intensity plot at wrong polarization angle')
 xlabel('Polarization angle value from optimal')
 ylabel('Intensity x-axis')
