@@ -4,15 +4,14 @@
 % Masullo, L.A., L.F. Lopez, and F.D. Stefani. 2022. A common framework for single-molecule localization using sequential structured illumination. Biophysical Reports. 2:100036. doi:10.1016/j.bpr.2021.100036.
 
 clear 
-smappath = '/Users/ries/git/SMAP'; % this code uses helper function from SMAP
-dirlist=genpath('/Users/ries/git/SMAP/shared');addpath(dirlist)
+pgit=fileparts(fileparts(fileparts(mfilename('fullpath'))));
+smappath = [pgit filesep 'SMAP']; % this code uses helper function from SMAP, please specify the path explicitely if not founds
+dirlist=genpath([smappath filesep 'shared']);addpath(dirlist)
 
-% simulationpath='/Users/ries/Library/CloudStorage/OneDrive-Personal/Projects/MINFLUXexcitation/paper/data/simulations/';
-simulationpath=[fileparts(fileparts(mfilename('fullpath'))) filesep 'PSF_simulation' filesep 'simulated_data' filesep]
-
+simulationpath=[pgit filesep 'MINFLUXexcitation' filesep 'PSF_simulation' filesep 'simulated_data' filesep];
 
 % important parameters
-L=50; % nm, diameter (not radius) of scan pattern
+L=50; % nm, diameter (not radius) of scan pattern, only for PSFs which are not explicitely calculated for different positions
 Lz=L*3;
 bgoffsetrel=0.005; %background that is added to the PSF. It is defined in comparision to the maximum of an Airy PSF (flat phase, overfilled objective) with same the same integrated intensity
 %for a vortex PSF at L=80 bgoffsetrel=0.01 corresponds to a center-frequncy-ratio (CFR) of 0.3
@@ -44,15 +43,15 @@ markerzoom='yo';
 %Airy PSF (flat phase, overfilled objective), used for calculating
 %background offset for all PSFs
 fileflat='simulation_flat_circular_xy.mat'; 
-psfimflat=load([simulationpath fileflat]).simulation_silObj_planner_flat_circular_xy;
+psfimflat=load([simulationpath fileflat]).simulation_flat_circular_xy;
 
 gaussmaxint=max(psfimflat(:));
 bgoffset=bgoffsetrel*gaussmaxint;
 
 %Bilobed PSF for x and y localization
-file='simulation_bilobed_linear_0to150_xy.mat';
-psfimbl=load([simulationpath file]).simulation_silObj_planner_halfmoon_linear_0to150_xy;
-psfbl=makePSF2DL(psfimbl,indL); %Assembles PSF matrix from images
+file='simulation_halfmoon_linear_neg25to25nm_xy'; % go back to all the values
+psfimbl=load([simulationpath file]).simulation_halfmoon_linear_neg25to25nm_xy;
+psfbl=makePSF2DL(psfimbl); %Assembles PSF matrix from images
 [sigma_CRB,sigma_CRBy,sigma_CRBx]=CRBMinflux(psfbl+bgoffset, [], [],N,sbr,prior,sprior,plotrange/pixelsize);
 
 midpxy=floor((size(sigma_CRBx)+1)/2);
@@ -62,7 +61,7 @@ xall2=(-midpxy(2):midpxy(2))*pixelsize;
 figure(100); clf
 nx=4; ny=4; %subplots
 subplot(nx,ny,1) %bilobed xy
-imagesc(xall1,xall2,(psfimbl(:,:,1)+bgoffset)/gaussmaxint); colorbar
+imagesc(xall1,xall2,(psfimbl(:,:,2)+bgoffset)/gaussmaxint); colorbar
 axis equal tight off
 xlabel('x (nm)')
 ylabel('y (nm)')
@@ -70,22 +69,21 @@ hold on
 plot([midpxy(1)*pixelsize-110 midpxy(1)*pixelsize-10],[midpxy(2) midpxy(2)]*pixelsize-10,'w')
 plotrect(gca,[-plotrange -plotrange plotrange plotrange],'w')
 plot([-1 0 1]*L/2,[0 0 0]*L/2,markerov,'MarkerSize',3)
-intenL=squeeze(psfimbl(midpxy(1),midpxy(2),indL))/gaussmaxint;% intensity at scan position
+intenL=squeeze(psfimbl(midpxy(1),midpxy(2),1))/gaussmaxint;% intensity at scan position
 title(['bisected, I(L/2) = ' num2str(intenL,2)])
-
 subplot(nx,ny,ny+1) %bilobed crb
 hold off
 plotPSF(sigma_CRB*sqrt(N),plotrange,pixelsize,maxcol,'$$\sigma_{2D} \cdot \sqrt{N}$$ (nm)')
 hold on
 plot([-1 0 1 0 0 0]*L/2,[0 0 0 -1 0 1]*L/2,markerzoom,'MarkerSize',3)
+
 %2D donut with a vortex phase
 filevortex='simulation_vortex_circular_xy.mat';
-psfimvortex=load([simulationpath filevortex]).simulation_silObj_planner_vortex_circular_xy;
+psfimvortex=load([simulationpath filevortex]).simulation_vortex_circular_xy;
 %scan pattern: triangle + center
 patternx3(:,1)=[0,1,-0.5,-0.5];
 patterny3(:,1)=[0,0,sind(120),-sind(120)];
 [sigma_vCRB,sigma_vCRBy,sigma_vCRBx]=CRBMinflux(psfimvortex+bgoffset, patternx3*L/2/pixelsize, patterny3*L/2/pixelsize,N,sbr,prior,sprior,plotrange/pixelsize);
-
 subplot(nx,ny,3)
 imagesc(xall2,xall1,(psfimvortex+bgoffset)/gaussmaxint); colorbar
 axis equal tight off
@@ -98,7 +96,6 @@ plot([midpxy(1)*pixelsize-110 midpxy(1)*pixelsize-10],[midpxy(2) midpxy(2)]*pixe
 plotrect(gca,[-plotrange -plotrange plotrange plotrange],'w')
 plot(patternx3*L/2,patterny3*L/2,markerov,'MarkerSize',3)
 hold off
-
 subplot(nx,ny,3+ny)
 plotPSF(sigma_vCRB*sqrt(N),plotrange,pixelsize,maxcol,'$$\sigma_{2D} \cdot \sqrt{N}$$ (nm)')
 hold on
@@ -106,7 +103,7 @@ plot(patternx3*L/2,patterny3*L/2,markerzoom,'MarkerSize',3)
 
 % 3D donut with tophat phase, 2D scanning
 fileth='simulation_tophat_circular_xy.mat';
-psfimth=load([simulationpath fileth]).intTophatXY;
+psfimth=load([simulationpath fileth]).simulation_tophat_circular_xy;
 [sigma_thCRB,sigma_thCRBy,sigma_thCRBx]=CRBMinflux(psfimth+bgoffset, patternx3*L/2/pixelsize, patterny3*L/2/pixelsize,N,sbr,prior,sprior,plotrange/pixelsize);
 
 subplot(nx,ny,9)
@@ -196,16 +193,16 @@ plot(patterny*L/2,patternx*L/2,markerzoom,'MarkerSize',3)
 %% 3D CRBs
 %flat for normalization of background:
 filef='simulation_circular_xyz_pxlSize5nm.mat';
-psfimf=load([simulationpath filef]).simulation_silObj_planner_circular_xyz;
+psfimf=load([simulationpath filef]).simulation_circular_xyz;
 cslice=psfimf(:,:,ceil(end/2));
 gaussmaxint3D=max(cslice(:));
 bgoffset3D=bgoffsetrel*gaussmaxint3D;
 
 fileth3D='simulation_tophat_circular_neg75to75nm_xyz_pxlSize5nm.mat';
-psfimth3D=load([simulationpath fileth3D]).simulation_silObj_planner_tophat_circular_neg75to75nm_xyz;
+psfimth3D=load([simulationpath fileth3D]).simulation_tophat_circular_neg75to75nm_xyz;
 
 fileb3D='simulation_halfmoon_linear_neg25to25nm_xyz_pxlSize5nm.mat';
-psfimb3D=load([simulationpath fileb3D]).simulation_silObj_planner_halfmoon_linear_neg25to25nm_xyz;
+psfimb3D=load([simulationpath fileb3D]).simulation_halfmoon_linear_neg25to25nm_xyz;
 
 % 3D scannign of tophat
 dx=[-1 -1 1 1 0 0 0];
@@ -272,12 +269,12 @@ plot(dx*L/2,dz*Lz/2, 'ko','MarkerSize',3)
 
 %% intensity vs L plot
 %load x-z image of tophat
-filen3Dthxz='simulation_tophat_circular_-150to150_xz.mat';
-psfimz=load([simulationpath filen3Dthxz]).matall;
+filen3Dthxz='simulation_tophat_circular_neg25to25nm_xz.mat';
+psfimz=load([simulationpath filen3Dthxz]).simulation_tophat_circular_neg25to25nm_xz;
 midpz=ceil(size(psfimz)/2);
 
 dL=max(posval)/pixelsize;
-intenLbsxy(1,:)=squeeze(psfimbl(midpxy(1),midpxy(2):midpxy(2)+dL,1))/gaussmaxint;
+intenLbsxy(1,:)=squeeze(psfimbl(midpxy(1),midpxy(2):midpxy(2)+dL,2))/gaussmaxint;
 intenLthz(1,:)=squeeze(psfimz(midpz(1),midpz(2):midpz(2)+dL,ceil(end/2)))/gaussmaxint;
 intenLthxy(1,:)=squeeze(psfimth(midpxy(1):midpxy(1)+dL,midpxy(2)))/gaussmaxint;
 intenLv(1,:)=squeeze(psfimvortex(midpz(1):midpz(1)+dL,midpxy(2)))/gaussmaxint;
@@ -437,15 +434,24 @@ psf(end+1:end+3,:,:)=makeshiftedPSF(psfim_flipped, dy, dx);
 end
 
 function psf=makePSF2DL(p1,indL)
-p1=imtranslate(p1,[0.1,0.1],"cubic"); % avoid indeterministic vvalues at zero
+p1=imtranslate(p1,[0.1,0.1],"cubic"); % avoid indeterministic values at zero
 psfim=p1;
-psfim_mirrored=p1(:,end:-1:1,:);
-psf(1,:,:)=psfim(:,:,1);
-psf(2,:,:)=psfim(:,:,indL);
-psf(3,:,:)=psfim_mirrored(:,:,indL);
-psf(4,:,:)=psfim(:,:,1)';
-psf(5,:,:)=psfim(:,:,indL)';
-psf(6,:,:)=psfim_mirrored(:,:,indL)';
+if nargin>1
+    psfim_mirrored=p1(:,end:-1:1,:);
+    psf(1,:,:)=psfim(:,:,1);
+    psf(2,:,:)=psfim(:,:,indL);
+    psf(3,:,:)=psfim_mirrored(:,:,indL);
+    psf(4,:,:)=psfim(:,:,1)';
+    psf(5,:,:)=psfim(:,:,indL)';
+    psf(6,:,:)=psfim_mirrored(:,:,indL)';
+else
+    psf(1,:,:)=psfim(:,:,1);
+    psf(2,:,:)=psfim(:,:,2);
+    psf(3,:,:)=psfim(:,:,3);
+    psf(4,:,:)=psfim(:,:,1)';
+    psf(5,:,:)=psfim(:,:,2)';
+    psf(6,:,:)=psfim(:,:,3)';    
+end
 end
 
 function psfz=makePSFz(pz,indL)
