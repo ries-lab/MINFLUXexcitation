@@ -49,9 +49,9 @@ gaussmaxint=max(psfimflat(:));
 bgoffset=bgoffsetrel*gaussmaxint;
 
 %Bilobed PSF for x and y localization
-file='simulation_halfmoon_linear_neg25to25nm_xy'; % go back to all the values
-psfimbl=load([simulationpath file]).simulation_halfmoon_linear_neg25to25nm_xy;
-psfbl=makePSF2DL(psfimbl); %Assembles PSF matrix from images
+file='simulation_halfmoon_linear_0to150nm_xy'; % go back to all the values
+psfimbl=load([simulationpath file]).simulation_halfmoon_linear_0to150nm_xy;
+psfbl=makePSF2DL(psfimbl,indL); %Assembles PSF matrix from images
 [sigma_CRB,sigma_CRBy,sigma_CRBx]=CRBMinflux(psfbl+bgoffset, [], [],N,sbr,prior,sprior,plotrange/pixelsize);
 
 midpxy=floor((size(sigma_CRBx)+1)/2);
@@ -61,7 +61,7 @@ xall2=(-midpxy(2):midpxy(2))*pixelsize;
 figure(100); clf
 nx=4; ny=4; %subplots
 subplot(nx,ny,1) %bilobed xy
-imagesc(xall1,xall2,(psfimbl(:,:,2)+bgoffset)/gaussmaxint); colorbar
+imagesc(xall1,xall2,(psfimbl(:,:,1)+bgoffset)/gaussmaxint); colorbar
 axis equal tight off
 xlabel('x (nm)')
 ylabel('y (nm)')
@@ -69,7 +69,7 @@ hold on
 plot([midpxy(1)*pixelsize-110 midpxy(1)*pixelsize-10],[midpxy(2) midpxy(2)]*pixelsize-10,'w')
 plotrect(gca,[-plotrange -plotrange plotrange plotrange],'w')
 plot([-1 0 1]*L/2,[0 0 0]*L/2,markerov,'MarkerSize',3)
-intenL=squeeze(psfimbl(midpxy(1),midpxy(2),1))/gaussmaxint;% intensity at scan position
+intenL=squeeze(psfimbl(midpxy(1),midpxy(2),indL))/gaussmaxint;% intensity at scan position
 title(['bisected, I(L/2) = ' num2str(intenL,2)])
 subplot(nx,ny,ny+1) %bilobed crb
 hold off
@@ -270,11 +270,11 @@ plot(dx*L/2,dz*Lz/2, 'ko','MarkerSize',3)
 %% intensity vs L plot
 %load x-z image of tophat
 filen3Dthxz='simulation_tophat_circular_neg75to75nm_xz.mat';
-psfimz=load([simulationpath filen3Dthxz]).simulation_tophat_circular_neg25to25nm_xz;
+psfimz=load([simulationpath filen3Dthxz]).simulation_tophat_circular_neg75to75nm_xz;
 midpz=ceil(size(psfimz)/2);
 
 dL=max(posval)/pixelsize;
-intenLbsxy(1,:)=squeeze(psfimbl(midpxy(1),midpxy(2):midpxy(2)+dL,2))/gaussmaxint;
+intenLbsxy(1,:)=squeeze(psfimbl(midpxy(1),midpxy(2):midpxy(2)+dL,1))/gaussmaxint;
 intenLthz(1,:)=squeeze(psfimz(midpz(1),midpz(2):midpz(2)+dL,ceil(end/2)))/gaussmaxint;
 intenLthxy(1,:)=squeeze(psfimth(midpxy(1):midpxy(1)+dL,midpxy(2)))/gaussmaxint;
 intenLv(1,:)=squeeze(psfimvortex(midpz(1):midpz(1)+dL,midpxy(2)))/gaussmaxint;
@@ -317,7 +317,7 @@ hold on
 clear profb profth profv lt
 for k=1:length(bgs)
     [sL2D,sLy2D,sLx2D,~,profb(:,:,k)]=getCRBL(psfimbl, N, sbr,bgs(k)*gaussmaxint, prior, sprior,plotrange/pixelsize,@makePSF2DL);
-    [sLz,sLyz,sLxz,psfz,prof2]=getCRBL(psfimz, N, sbr,bgs(k)*gaussmaxint, prior, sprior,plotrange/pixelsize,@makePSFz,length(posval));
+    % [sLz,sLyz,sLxz,psfz,prof2]=getCRBL(psfimz, N, sbr,bgs(k)*gaussmaxint, prior, sprior,plotrange/pixelsize,@makePSFz,length(posval));
     [sLth2D,sLyth2D,sLxth2D,~,profth(:,:,k)]=getCRBLshift(psfimth+bgs(k)*gaussmaxint, N, sbr, prior, sprior,patternx3, patterny3,posval/pixelsize,plotrange/pixelsize);
     [sLv2D,sLyv2D,sLxv2D,~,profv(:,:,k)]=getCRBLshift(psfimvortex+bgs(k)*gaussmaxint, N, sbr, prior, sprior,patternx3, patterny3,posval/pixelsize,plotrange/pixelsize);
     [sigma_fCRB,sigma_fCRBy,sigma_fCRBx]=CRBMinflux(psfimflat+bgs(k)*gaussmaxint, pattern2x2x*L2x2/2/pixelsize, pattern2x2y*L2x2/2/pixelsize,N,sbr,prior,sprior,plotrange/pixelsize);
@@ -411,7 +411,7 @@ imagesc(xplot,xplot,plotim,[0 maxcol]); colorbar
 axis equal tight off
 cols=parula;
 cols(end,:)=[1,1,1];
-colormap(cols)
+colormap(gca,cols)
 title([titlet ' , min= ' num2str(min(plotim(:)),3)],'Interpreter','latex')
 xlabel('x (nm)')
 ylabel('y (nm)')

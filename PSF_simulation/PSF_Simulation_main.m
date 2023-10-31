@@ -152,8 +152,8 @@ for k = 1:length(shiftmat)
     matall(:,:,k)=squeeze(out.I(:,:,:,round(z/2)));
 end
 
-simulation_halfmoon_linear_neg25to25nm_xy = matall;
-save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_neg25to25nm_xy.mat'], 'simulation_halfmoon_linear_neg25to25nm_xy')
+simulation_halfmoon_linear_0to150nm_xy = matall;
+save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_0to150nm_xy.mat'], 'simulation_halfmoon_linear_0to150nm_xy')
 
 %% Calculation of PSF with tophat (xy, no phase delay)
 disp('tophat')
