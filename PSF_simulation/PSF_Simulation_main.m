@@ -122,8 +122,8 @@ sys.rz = 0.01e-6;% Axial range.
 out.dr = 2e-9;
 out.dz = 2e-9;
 sys.pl = 0; % Angle of the linear polarization.
-% shiftmat = [0, 3.6,	7.3, 10.9, 14.5, 18.1, 21.8, 29, 36.3, 54.4, 72.6, 90.7, 108.9]; % Phase delay in degrees for displacements of 0, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 125, and 150 nm. 
-shiftmat = [-18.1, 0, 18.1]; % Shift of 25 nm, thus L = 50 nm.
+shiftmat = [0, 3.6,	7.3, 10.9, 14.5, 18.1, 21.8, 29, 36.3, 54.4, 72.6, 90.7, 108.9]; % Phase delay in degrees for displacements of 0, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 125, and 150 nm. 
+% shiftmat = [-18.1, 0, 18.1]; % Shift of 25 nm, thus L = 50 nm.
 matall = [];
 
 figure(99);clf
@@ -192,8 +192,8 @@ for k = length(shiftmat):-1:1
 end
 
 
-simulation_tophat_circular_neg25to25nm_xz = matall;
-save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_neg25to25nm_xz.mat'], 'simulation_tophat_circular_neg25to25nm_xz')
+simulation_tophat_circular_neg75to75nm_xz = matall;
+save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_neg75to75nm_xz.mat'], 'simulation_tophat_circular_neg75to75nm_xz')
 
 %% Calculation of PSF with tophat (- 75 to 75nm, pixel size 5 nm)
 sys.wa=7e-3;
