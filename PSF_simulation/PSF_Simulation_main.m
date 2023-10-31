@@ -161,6 +161,7 @@ sys.wa=7e-3;
 sys.rz = 0.01e-6;% Axial range.
 out.dr = 2e-9;
 out.dz = 2e-9;
+sys.delshift = 0;
 sys.pl = 0; % Angle of the linear polarization.
 sys.Ei = {'pishift', 'circular'};  
   
