@@ -7,3 +7,4 @@ Software to calculate MINFLUX PSFs and CRB. Use the script [PSF_Simulation_main.
 
 To calculate CRBs, please first install SMAP from [here](https://github.com/jries/SMAP). Then use  the script [plotCRBMinflux_simulPSF.m](/CRBcalculations) to calculate and plot CRBs. 
 
+[variable_phase_plate.nb](variable_phase_plate.nb) is a Mathematica notebook to calculate polarization states using Jones matrices.
