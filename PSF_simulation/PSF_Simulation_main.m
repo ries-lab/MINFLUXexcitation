@@ -1,11 +1,15 @@
-%% This script simulates an excitation PSF for MINFLUX localization precision calculation. 
+% This script simulates an excitation PSF for MINFLUX localization precision calculation. 
 % Code written by Takahiro DEGUCHI, European Molecular Biology Laboratory, October 2023.
 % This code utilizes a MATLAB software library, "Electromagnetic field in the focus region of a microscope objective", 
 % written by Marcel Leutenegger. Request for the original package should be requested to marcel.leutenegger@alumni.epfl.ch.
 % The library is included in this distribution.
 
-% function [out, sys, opt] = PSF_Simulation_main
+
 %% Setting system parameters
+% to automatically determine paths, this scirpt has to be run with the
+% 'Run' functionality, not the 'Run section'. The sections below can be run
+% with 'run section'.
+
 clear
 psimul=fileparts(mfilename('fullpath'));
 addpath([psimul filesep 'library'])
@@ -39,6 +43,7 @@ sys.intImage = opt.intImage;
 
 
 %% Gaussian beam generation
+disp('flat profile')
 sys.wa=7e-3;
 sys.rz = 0.1e-6;% Axial range.
 out.dr = 2e-9;
@@ -71,6 +76,7 @@ simulation_circular_xyz = squeeze(out.I(1, :,:,:));
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_circular_xyz_pxlSize5nm.mat'], 'simulation_circular_xyz')
 
 %% Vortex 2D donut.
+disp('Vortex 2D donut')
 sys.wa=7e-3;
 sys.rz = 0.1e-6;% Axial range.
 out.dr = 2e-9;
@@ -92,6 +98,7 @@ simulation_vortex_circular_xy = squeeze(out.I(1, :,:,round(z/2)));
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_vortex_circular_xy.mat'], 'simulation_vortex_circular_xy')
 
 %% Calculation of PSF with halfmoon (-25 to 25 nm, xyz, pixel size 5 nm).
+disp('bilobed')
 sys.wa=7e-3;
 sys.rz = 0.8e-6;% Axial range.
 out.dr = 5e-9;
@@ -117,6 +124,7 @@ simulation_halfmoon_linear_neg25to25nm_xyz = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_neg25to25nm_xyz_pxlSize5nm.mat'], 'simulation_halfmoon_linear_neg25to25nm_xyz')
 
 %% Calculation of PSF with halfmoon phase delays (displacement 0 to 150 nm).
+disp('bilobed different L')
 sys.wa=7e-3;
 sys.rz = 0.01e-6;% Axial range.
 out.dr = 2e-9;
@@ -148,6 +156,7 @@ simulation_halfmoon_linear_neg25to25nm_xy = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_neg25to25nm_xy.mat'], 'simulation_halfmoon_linear_neg25to25nm_xy')
 
 %% Calculation of PSF with tophat (xy, no phase delay)
+disp('tophat')
 sys.wa=7e-3;
 sys.rz = 0.01e-6;% Axial range.
 out.dr = 2e-9;
@@ -165,6 +174,7 @@ simulation_tophat_circular_xy = squeeze(out.I(:,:,:,round(z/2)));
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_xy'], 'simulation_tophat_circular_xy')
 
 %% Calculation of PSF with tophat ( -75 to 75 nm)
+disp('tophat with different L')
 sys.wa=7e-3;
 sys.rz = 0.8e-6;% Axial range.
 out.dr = 2e-9;
@@ -196,6 +206,7 @@ simulation_tophat_circular_neg75to75nm_xz = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_neg75to75nm_xz.mat'], 'simulation_tophat_circular_neg75to75nm_xz')
 
 %% Calculation of PSF with tophat (- 75 to 75nm, pixel size 5 nm)
+disp('tophat 3D')
 sys.wa=7e-3;
 sys.rz = 0.8e-6;% Axial range.
 out.dr = 5e-9;
@@ -219,6 +230,7 @@ simulation_tophat_circular_neg75to75nm_xyz = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_neg75to75nm_xyz_pxlSize5nm.mat'], 'simulation_tophat_circular_neg75to75nm_xyz')
 
 %% Interferometric bi-lobe beam from Wolff, Scheiderer et al., Science 2023
+disp('interferometric PSF')
 % Beam diameter and positions are referred to a thesis by Dr. Tobias Engelhardt, where beam diameter 2mm, distance between two beams 4mm, back aperture 5.6mm.
 sys.rz = 0.1e-6;% Axial range.
 out.dr = 2e-9;
@@ -272,6 +284,7 @@ save([psimul, filesep, 'simulated_data', filesep, 'simulation_gauss_linear_iMINF
 
 
 %%  Calculation of PSF with halfmoon at wrong polarizations.
+disp('bilobed with wrong polarizations')
 sys.wa=7e-3;
 sys.rz = 0.01e-6;% Axial range.
 out.dr = 5e-9;

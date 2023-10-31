@@ -269,7 +269,7 @@ plot(dx*L/2,dz*Lz/2, 'ko','MarkerSize',3)
 
 %% intensity vs L plot
 %load x-z image of tophat
-filen3Dthxz='simulation_tophat_circular_neg25to25nm_xz.mat';
+filen3Dthxz='simulation_tophat_circular_neg75to75nm_xz.mat';
 psfimz=load([simulationpath filen3Dthxz]).simulation_tophat_circular_neg25to25nm_xz;
 midpz=ceil(size(psfimz)/2);
 
