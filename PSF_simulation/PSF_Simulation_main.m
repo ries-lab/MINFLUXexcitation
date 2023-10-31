@@ -63,6 +63,7 @@ plot((1:size(out.I, 3))*opt.pixSize, squeeze(out.I(1,round(y/2), :, round(z/2)))
 simulation_flat_circular_xy = squeeze(out.I(1, :,:,round(z/2)));
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_flat_circular_xy.mat'], 'simulation_flat_circular_xy')
 
+maxgauss=simulation_flat_circular_xy(ceil(end/2),ceil(end/2));
 
 sys.rz = 0.8e-6;% Axial range.
 out.dr = 5e-9;
@@ -316,7 +317,7 @@ ylabel('Intensity x-axis')
 figure(110);clf
 for kk = 1:size(matall, 3)
     hold all
-    plot(kk-1, min(matall(round(y/2), round(x/2)-10:round(x/2)+10, kk))/max(matall(round(y/2), :, kk)), '.')
+    plot(kk-1, min(matall(round(y/2), round(x/2)-10:round(x/2)+10, kk))/maxgauss, '.')
 end
 title('Halfmoon PSF wrong polarization peak-to-minima')
 xlabel('Polarization angle value from optimal')
