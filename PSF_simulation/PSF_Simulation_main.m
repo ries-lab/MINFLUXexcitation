@@ -23,7 +23,7 @@ opt.Et = 0; % Display Et during the calculation.
 opt.Ef = 0;    % Display Ef during the calculation.
 opt.calbar = 0;    % Display calculation progress bar.
 opt.mem = 50000;
-opt.pixSize = 5e-9; % Although the data size will be huge, pixel size of 2e-9 is recommended for fine calculation.
+opt.pixSize = 2e-9; % Although the data size will be huge, pixel size of 2e-9 is recommended for fine calculation.
 opt.radiusCanvas = 0.7e-6; % Lateral range.
 opt.depthCanvas = 0.8e-6; % Axial range. 
 opt.polAngle = 0.0*pi; % Linear polarization angle.
@@ -56,7 +56,6 @@ out=effIntensity(sys,out);
 [a,x,y,z] = size(out.I);
 
 figure(99); clf
-title('Y axis profile')
 hold all
 plot((1:size(out.I, 3))*opt.pixSize, squeeze(out.I(1,round(y/2), :, round(z/2))))
 
@@ -90,7 +89,7 @@ out=effIntensity(sys,out);
 [a,x,y,z] = size(out.I);
 yaxis = linspace(0, y-1, y)*opt.pixSize;
 zaxis = linspace(0, z-1, z)*opt.pixSize;
-figure(99);clf
+figure(99);
 hold all
 plot(yaxis, squeeze(out.I(1,round(y/2), :, round(z/2))))
 hold all
@@ -135,7 +134,7 @@ shiftmat = [0, 3.6,	7.3, 10.9, 14.5, 18.1, 21.8, 29, 36.3, 54.4, 72.6, 90.7, 108
 % shiftmat = [-18.1, 0, 18.1]; % Shift of 25 nm, thus L = 50 nm.
 matall = [];
 
-figure(99);clf
+figure(100);clf
 for k = 1:length(shiftmat)
     sys.delshift = deg2rad(shiftmat(k));   
     sys.Ei = {'halfmoon', 'linear'};
@@ -159,7 +158,7 @@ save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_0t
 %% Calculation of PSF with tophat (xy, no phase delay)
 disp('tophat')
 sys.wa=7e-3;
-sys.rz = 0.01e-6;% Axial range.
+sys.rz = 0.1e-6;% Axial range.
 out.dr = 2e-9;
 out.dz = 2e-9;
 sys.delshift = 0;
@@ -171,6 +170,14 @@ sys.Ei = {'pishift', 'circular'};
 out=effField(sys,out, opt);      
 out=effIntensity(sys,out);
 [a,x,y,z] = size(out.I);
+
+figure(99);
+hold all
+plot((1:size(out.I, 3))*opt.pixSize, squeeze(out.I(1,round(y/2), :, round(z/2))))
+title('Intensity plot of different PSFs')
+xlabel('Position in x-axis (m)')
+ylabel('Intensity x-axis')
+legend('Gaussian', '2D donut (Vortex)', '3D donut (Tophat)', 'Location', 'northeast')
 
 simulation_tophat_circular_xy = squeeze(out.I(:,:,:,round(z/2)));
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_xy'], 'simulation_tophat_circular_xy')
@@ -202,7 +209,10 @@ for k = length(shiftmat):-1:1
     hold all
     matall(:,:,k)=squeeze(out.I(:,round(y/2),:,:)); 
 end
-
+figure(98);
+title('3D donut PSF intensity plot at different phase')
+xlabel('Position in z-axis (m)')
+ylabel('Intensity z-axis')
 
 simulation_tophat_circular_neg75to75nm_xz = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_tophat_circular_neg75to75nm_xz.mat'], 'simulation_tophat_circular_neg75to75nm_xz')
@@ -242,6 +252,7 @@ diam = [0.0023];
 piston = [161.7, 180, 198.3];
 sys.pl = 0.5*pi; % Angle of the linear polarization.
 matall = [];
+figure(102);clf;
 
 for ii = 1:length(shiftx) % Loop for different beam shift amount.
     for kk = 1:length(diam) % Loop for different beam diameter.
@@ -272,7 +283,7 @@ for ii = 1:length(shiftx) % Loop for different beam shift amount.
         outSum.E = Eright + Eleft;
         outSum=effIntensity(sys,outSum);
         outSum.I = outSum.I./2./141;
-        figure(102);clf;
+        figure(102);
         hold all;plot(((1:size(outSum.I, 3))-round(y/2))*opt.pixSize, squeeze((outSum.I(1,:,round(x/2),round(z/2))))./1)
         matall(:,:,jj) = squeeze(outSum.I(:,:,:,round(z/2)));
         end
@@ -280,6 +291,8 @@ for ii = 1:length(shiftx) % Loop for different beam shift amount.
 end
 figure(102);
 title('Interferometric PSF x-axis intensity plot at different phase')
+xlabel('Position in x-axis (m)')
+ylabel('Intensity x-axis')
 
 simulation_gauss_linear_iMINFLUX_xyphi_L50nm = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_gauss_linear_iMINFLUX_xyphi_L50nm.mat'], 'simulation_gauss_linear_iMINFLUX_xyphi_L50nm')
@@ -291,6 +304,7 @@ sys.wa=7e-3;
 sys.rz = 0.01e-6;% Axial range.
 out.dr = 5e-9;
 out.dz = 5e-9;
+opt.pixSize = out.dr;
 sys.pl = 0; % Angle of the linear polarization.
 shiftmat = [0];
 poldeg = linspace(0, 45, 46); % Degree of linear polarization orientation
@@ -321,7 +335,7 @@ for kk = 1:size(matall, 3)
 end
 title('Halfmoon PSF wrong polarization peak-to-minima')
 xlabel('Polarization angle value from optimal')
-ylabel('Intensity ratio')
+ylabel('Zero-center intensity ratio')
 
 simulation_halfmoon_linear_Pol_0to45deg_xyphi = matall;
 save([psimul, filesep, 'simulated_data', filesep, 'simulation_halfmoon_linear_wrongPol_0to45deg_xyphi.mat'], 'simulation_halfmoon_linear_Pol_0to45deg_xyphi')
