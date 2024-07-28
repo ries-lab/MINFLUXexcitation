@@ -118,7 +118,7 @@ plot(xest(1:3:9,:,1)')
 xlabel('data point')
 ylabel('x position nm')
 
-photperpos=photpos/sum(photpos)
+phoperpos=photpos/sum(photpos)
 %%
 pattern.patternrepeat=1;
 MFbiasprecision(xfgt,5,100,pattern,psfpar,10000);
