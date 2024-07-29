@@ -3,6 +3,11 @@
 %times in us
 %positions in nm
 
+%TODO:
+% output individual photons, or normalize directly by sqrt(N)
+% option to add iteration if photons below a cutoff (lower than target
+% photons).
+%only one photon stream global
 
 %test parameters
 numlocs=200;
@@ -14,7 +19,7 @@ pattern.localizationtime=1000;
 pattern.patternrepeat=1;
 pattern.L=50;
 pattern.usecenter=false;
-pattern.orbitpoints=3;
+pattern.orbitpoints=6;
 pattern.targetphot=1000;
 psfpar.off=0;
 
@@ -23,11 +28,11 @@ psfpar.off=0;
 numpix=10;
 ton=logspace(0,log10(pattern.localizationtime),numpix);
 toff=logspace(0,log10(pattern.localizationtime),numpix);
-bias=zeros(length(ton),length(toff),2);precision=bias;rmse=bias;photons=zeros(length(ton),length(toff));
+bias=zeros(length(ton),length(toff),2);precision=bias;rmsenorm=bias;photons=zeros(length(ton),length(toff));
 photpos=zeros(1,pattern.orbitpoints+pattern.usecenter);
 for i1=1:length(ton)
     for i2=1:length(toff)
-        [bias(i1,i2,:),precision(i1,i2,:),rmse(i1,i2,:),photons(i1,i2),~,photall]=MFbiasprecision(xfgt,ton(i1),toff(i2),pattern,psfpar,numlocs);
+        [bias(i1,i2,:),precision(i1,i2,:),rmsenorm(i1,i2,:),photons(i1,i2),~,photall]=MFbiasprecision(xfgt,ton(i1),toff(i2),pattern,psfpar,numlocs);
         photpos=photpos+mean(photall,1);
     end
 end
@@ -36,7 +41,8 @@ locprecMF=pattern.L./sqrt(8*(photons));
 
 figure(191)
 subplot(3,3,1)
-imagesc(toff,ton,precision(:,:,1)./locprecMF)
+imagesc(toff,ton,rmsenorm(:,:,1))
+% imagesc(toff,ton,precision(:,:,1)./locprecMF)
 title(['precision x rel, pattern rep: ' num2str(pattern.patternrepeat)])
 ylabel('ton (us)')
 xlabel('toff (us)')
@@ -45,7 +51,8 @@ colorbar
 axis xy
 
 subplot(3,3,2)
-imagesc(toff,ton,precision(:,:,2)./locprecMF)
+imagesc(toff,ton,rmsenorm(:,:,2))
+% imagesc(toff,ton,precision(:,:,2)./locprecMF)
 title('precision y rel')
 ylabel('ton (us)')
 xlabel('toff (us)')
@@ -88,20 +95,21 @@ photperpos=photpos/sum(photpos)
 %%
 ton=100;
 toff=100;
-patternreps=1:20;
+patternreps=[1:19 20:5:100];
 numlocs=1000;
-bias=zeros(length(patternreps),2);precision=bias;rmse=bias; photons=zeros(length(patternreps),1);
+bias=zeros(length(patternreps),2);precision=bias;rmsenorm=bias; photons=zeros(length(patternreps),1);
 xest=zeros(length(patternreps),numlocs,2);
 photpos=zeros(1,pattern.orbitpoints+pattern.usecenter);
 for k=1:length(patternreps)
     pattern.patternrepeat=patternreps(k);
-    [bias(k,:),precision(k,:), rmse(k,:),photons(k),xest(k,:,:),photall]=MFbiasprecision(xfgt,ton,toff,pattern,psfpar,numlocs);
+    [bias(k,:),precision(k,:), rmsenorm(k,:),photons(k),xest(k,:,:),photall]=MFbiasprecision(xfgt,ton,toff,pattern,psfpar,numlocs);
     photpos=photpos+mean(photall,1);
 end
 locprecMF=pattern.L./sqrt(8*(photons(:)));
 figure(191)
 subplot(3,3,7)
-plot(patternreps,precision./locprecMF)
+% plot(patternreps,precision./locprecMF)
+plot(patternreps,rmsenorm)
 title(['precision, ton=' num2str(ton) ', toff=' num2str(ton)])
 ylabel('precision rel')
 xlabel('pattern repeats')
@@ -120,21 +128,25 @@ ylabel('x position nm')
 
 phoperpos=photpos/sum(photpos)
 %%
-pattern.patternrepeat=1;
-MFbiasprecision(xfgt,5,100,pattern,psfpar,10000);
-
-
-%%
+pattern.patternrepeat=100;
+[bias,precision, rmsenorm,photons,xest,photall]=MFbiasprecision(xfgt,100,100,pattern,psfpar,1000);
 ff=3;
 disp(['x: ' num2str(bias(1),ff) ' ± ' num2str(precision(1),ff) ' nm, y: ' num2str(bias(2),ff) ' ± ' num2str(precision(2),ff) ' nm, locprec ' num2str(mean(locprecMF(:)),ff) 'nm'])
 
-function [bias,precision,rmse,photons,xest,photall]=MFbiasprecision(xfgt,ton,toff,pattern,psfpar,numlocs)
+
+%%
+
+function [bias,precision,rmsenorm,photons,xest,photall]=MFbiasprecision(xfgt,ton,toff,pattern,psfpar,numlocs)
 for k=numlocs:-1:1
     [xest(k,:),phot(k),photall(k,:)]=simulateMFphotons(xfgt,ton,toff,pattern,psfpar);
 end
 dx=xest-xfgt;
 precision=std(dx,[],1,'omitmissing');
-rmse=sqrt(mean(dx.^2));
+
+locprecMF=pattern.L./sqrt(8*(phot(:)));
+rmsenorm=sqrt(mean(dx.^2./locprecMF.^2,'omitmissing'));
+
+% rmse=sqrt(mean(dx.^2,'omitmissing'));
 bias=mean(dx,1,'omitmissing');
 photons=mean(phot,'omitmissing');
 % sum(isnan(bias))
