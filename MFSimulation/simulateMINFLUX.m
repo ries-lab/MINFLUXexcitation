@@ -4,10 +4,10 @@
 %positions in nm
 
 %TODO:
-% output individual photons, or normalize directly by sqrt(N)
 % option to add iteration if photons below a cutoff (lower than target
 % photons).
-%only one photon stream global
+%only one photon stream global. But calculate on fraction would be very
+%slow, we would need to constrict search.
 
 %test parameters
 numlocs=200;
@@ -41,19 +41,22 @@ locprecMF=pattern.L./sqrt(8*(photons));
 
 figure(191)
 subplot(3,3,1)
-imagesc(toff,ton,rmsenorm(:,:,1))
+imagesc(toff,ton,(rmsenorm(:,:,1)))
+set(gca,'ColorScale','log')
 % imagesc(toff,ton,precision(:,:,1)./locprecMF)
-title(['precision x rel, pattern rep: ' num2str(pattern.patternrepeat)])
+title(['RMSE/locprec x rel, pattern rep: ' num2str(pattern.patternrepeat)])
 ylabel('ton (us)')
 xlabel('toff (us)')
 set(gca,{'XScale','YScale'},{'log','log'});
 colorbar
 axis xy
 
+
 subplot(3,3,2)
 imagesc(toff,ton,rmsenorm(:,:,2))
+set(gca,'ColorScale','log')
 % imagesc(toff,ton,precision(:,:,2)./locprecMF)
-title('precision y rel')
+title('RMSE/locprec y rel')
 ylabel('ton (us)')
 xlabel('toff (us)')
 set(gca,{'XScale','YScale'},{'log','log'});
@@ -93,10 +96,10 @@ axis xy
 % xlabel('position')
 photperpos=photpos/sum(photpos)
 %%
-ton=100;
-toff=100;
-patternreps=[1:19 20:5:100];
-numlocs=1000;
+numlocs=200;
+ton=200;
+toff=50;
+patternreps=[1:8 10:2:18 20:5:40 50:10:100];
 bias=zeros(length(patternreps),2);precision=bias;rmsenorm=bias; photons=zeros(length(patternreps),1);
 xest=zeros(length(patternreps),numlocs,2);
 photpos=zeros(1,pattern.orbitpoints+pattern.usecenter);
@@ -110,9 +113,11 @@ figure(191)
 subplot(3,3,7)
 % plot(patternreps,precision./locprecMF)
 plot(patternreps,rmsenorm)
-title(['precision, ton=' num2str(ton) ', toff=' num2str(ton)])
-ylabel('precision rel')
+title(['RMSE/locprec, ton=' num2str(ton) ', toff=' num2str(toff)])
+ylabel('RMSE/locprec rel')
 xlabel('pattern repeats')
+ax=gca;
+ax.YLim(1)=1;
 
 subplot(3,3,8)
 plot(patternreps,bias)
@@ -122,14 +127,15 @@ xlabel('pattern repeats')
 
 
 subplot(3,3,9)
-plot(xest(1:3:9,:,1)')
+plot(xest([1 3 end],:,1)')
 xlabel('data point')
 ylabel('x position nm')
 
-phoperpos=photpos/sum(photpos)
+photperpos=photpos/sum(photpos)
 %%
-pattern.patternrepeat=100;
-[bias,precision, rmsenorm,photons,xest,photall]=MFbiasprecision(xfgt,100,100,pattern,psfpar,1000);
+pattern2=pattern;
+pattern2.patternrepeat=100;
+[bias,precision, rmsenorm,photons,xest,photall]=MFbiasprecision(xfgt,100,100,pattern2,psfpar,1000);
 ff=3;
 disp(['x: ' num2str(bias(1),ff) ' ± ' num2str(precision(1),ff) ' nm, y: ' num2str(bias(2),ff) ' ± ' num2str(precision(2),ff) ' nm, locprec ' num2str(mean(locprecMF(:)),ff) 'nm'])
 
@@ -155,7 +161,6 @@ end
 
 function [xest,numphot,photp]=simulateMFphotons(xfgt,ton,toff,pattern,psfpar)
 %calculate derived parameters
-% onfraction=ton/(ton+toff);
 totalpoints=pattern.orbitpoints+pattern.usecenter;
 time_pattern_point=pattern.localizationtime/pattern.patternrepeat/totalpoints;
 pattern.xpos=makepattern(pattern);
@@ -171,17 +176,18 @@ tonoff=blinkingtrace(ton,toff,maxsimultime);
 time_pattern_start=rand*tonoff(end,end)/2; %choose random point to avoid starting always with the on state
 %repeat if too few photons?
 inten=zeros(1,totalpoints);
-photp=zeros(1,totalpoints);
+photpint=zeros(1,totalpoints);
 
 for pr=1:pattern.patternrepeat
+    iPSF=PSF(-(xfgt-pattern.xpos(:,:)),psfpar);
     for p=1:totalpoints
         fraction_on=calculate_onfraction(tonoff,time_pattern_start,time_pattern_point);
-        inten(p)=PSF(-(xfgt-pattern.xpos(p,:)),psfpar)*fraction_on;
-        photp(p)=photp(p)+poissrnd(inten(p)*brightness);
+        % inten(p)=PSF(-(xfgt-pattern.xpos(p,:)),psfpar)*fraction_on;
+        photpint(p)=photpint(p)+iPSF(p)*fraction_on*brightness;
         time_pattern_start=time_pattern_start+time_pattern_point;
     end
 end
-
+photp=poissrnd(photpint);
 xest=estimate_position(photp,pattern,psfpar);
 numphot=sum(photp);
 end
@@ -246,7 +252,7 @@ end
 
 
 function intensity=PSF(xrel,psfpar)
-intensity=(sum(xrel.^2))+psfpar.off;
+intensity=(sum(xrel.^2,2))+psfpar.off;
 end
 
 
