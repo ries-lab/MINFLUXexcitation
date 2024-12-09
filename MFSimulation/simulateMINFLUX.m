@@ -11,7 +11,7 @@
 
 %test parameters
 numlocs=200;
-xfgt=[0,0]; %position
+xfgt=[0.,0]; %position
 
 
 %system parameters
@@ -96,9 +96,9 @@ axis xy
 % xlabel('position')
 photperpos=photpos/sum(photpos)
 %%
-numlocs=200;
-ton=200;
-toff=50;
+numlocs=2000;
+ton=100;
+toff=100;
 patternreps=[1:8 10:2:18 20:5:40 50:10:100];
 bias=zeros(length(patternreps),2);precision=bias;rmsenorm=bias; photons=zeros(length(patternreps),1);
 xest=zeros(length(patternreps),numlocs,2);
@@ -127,7 +127,8 @@ xlabel('pattern repeats')
 
 
 subplot(3,3,9)
-plot(xest([1 3 end],:,1)')
+figure(77)
+plot(xest([1 end],:,1)')
 xlabel('data point')
 ylabel('x position nm')
 
@@ -174,6 +175,7 @@ maxsimultime=totalpoints*time_pattern_point*pattern.patternrepeat;
 
 tonoff=blinkingtrace(ton,toff,maxsimultime);
 time_pattern_start=rand*tonoff(end,end)/2; %choose random point to avoid starting always with the on state
+%but is this right? we coarsly localize when in on state. Should be option.
 %repeat if too few photons?
 inten=zeros(1,totalpoints);
 photpint=zeros(1,totalpoints);
