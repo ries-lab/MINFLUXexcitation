@@ -1,0 +1,22 @@
+%MINFLUX Simulator script
+
+fl=fluorophore;
+%initialize
+psf=PSFMF;
+%initialize
+loc=locMF;
+loc.PSF=psf;
+loc.fluorophore=fl;
+loc.L=100;
+loc.makeorbitpattern(4,1);
+%initialize
+est=estMF;
+
+numlocs=100;
+xest=zeros(numlocs,3);
+phot=zeros(numlocs,1);
+for k=1:numlocs
+    photp=loc.patternrepeatscan;
+    xest(k,:)=est.positionestimate(photp,loc.patternpos);
+    phot(k)=sum(photp);
+end

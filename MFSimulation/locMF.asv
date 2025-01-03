@@ -1,0 +1,38 @@
+classdef locMF<handle
+    properties
+        posc=[0 0 0]
+        L
+        patternpos
+        fluorophore
+        PSF
+        pointtime=10;
+        patternrepeat=1;
+    end
+    methods
+        function phot=patternrepeatscan(obj)
+            for k=1:obj.patternrepeat
+                phot=obj.orbitscan+phot;
+            end
+        end
+        function phot=orbitscan(obj)
+            totalpoints=size(obj.patternpos,1);
+            photint=zeros(1,totalpoints);
+            for k=1:totalpoints
+                photint(k)=photint(k)+obj.fluorophore.intensity(obj.PSF.intensity((obj.patternpos(k,:)-obj.posc)*obj.L,obj.fluorophore.pos))*obj.pointtime;
+            end
+            phot=poissrnd(photint);
+        end
+        function makeorbitpattern(obj,orbitpoints,usecenter)
+            dphi=2*pi/orbitpoints;
+            phi=(0:dphi:2*pi-dphi)';
+            x=cos(phi);
+            y=sin(phi);
+            xpattern=horzcat(x,y,0*phi);
+            if usecenter
+                xpattern(end+1,:)=[0,0,0];
+            end
+            obj.patternpos=xpattern;
+        end
+
+    end
+end

@@ -1,0 +1,14 @@
+classdef estMF<handle
+    properties
+
+
+    end
+    methods
+        function positionestimate(obj,photonsi,pattern)
+            pi=photp/sum(photp);
+% eq 2.63
+xest=-sum(pi'.*pattern.xpos);
+        end
+
+    end
+end

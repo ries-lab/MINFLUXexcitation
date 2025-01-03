@@ -127,7 +127,7 @@ xlabel('pattern repeats')
 
 
 subplot(3,3,9)
-figure(77)
+% figure(77)
 plot(xest([1 end],:,1)')
 xlabel('data point')
 ylabel('x position nm')
