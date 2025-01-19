@@ -1,8 +1,8 @@
 classdef locMF<handle
     properties
-        posc=[0 0 0]
+        posc=[0 0 0];
         L=100; %nanometers
-        patternpos
+        patternpos=[0 0 0];
         fluorophore
         PSF
         dwelltime=1;%milliseconds
@@ -19,7 +19,7 @@ classdef locMF<handle
             totalpoints=size(obj.patternpos,1);
             photint=zeros(1,totalpoints);
             for k=1:totalpoints
-                photint(k)=photint(k)+obj.fluorophore.intensity(obj.PSF.intensity((obj.patternpos(k,:)-obj.posc),obj.fluorophore.pos))*obj.dwelltime;
+                photint(k)=photint(k)+obj.fluorophore.intensity(obj.PSF.intensity([1,1],(obj.patternpos(k,:)*obj.L/2-obj.posc),obj.fluorophore.pos))*obj.dwelltime;
             end
             phot=poissrnd(photint);
         end
@@ -32,7 +32,7 @@ classdef locMF<handle
             if usecenter
                 xpattern(end+1,:)=[0,0,0];
             end
-            obj.patternpos=xpattern*obj.L/2;
+            obj.patternpos=xpattern;
         end
         function lp=locprecCRB(obj,photons)
             lp=obj.L./sqrt(8*(photons));

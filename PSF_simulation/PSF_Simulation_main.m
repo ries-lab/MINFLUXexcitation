@@ -45,12 +45,15 @@ sys.intImage = opt.intImage;
 %% Gaussian beam generation
 disp('flat profile')
 sys.wa=7e-3;
-sys.rz = 0.1e-6;% Axial range.
-out.dr = 2e-9;
-out.dz = 2e-9;
+sys.rz = 0.8e-6;% Axial range.
+out.dr = 5e-9;
+out.dz = 5e-9;
 sys.pl = 0; % Angle of the linear polarization.
 
-sys.Ei = {'circular'};
+sys.Zr=[2, 2, .1; 4,0,0.5];
+
+sys.Ei = {'circular','zernike'};
+% sys.Ei = {'circular'};
 out=effField(sys,out, opt);      
 out=effIntensity(sys,out);
 [a,x,y,z] = size(out.I);
